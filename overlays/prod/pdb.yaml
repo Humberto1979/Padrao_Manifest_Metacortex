@@ -1,0 +1,14 @@
+# PodDisruptionBudget: protege contra drenagem simultânea de todas as réplicas (regra 2.5 — recomendado em prod).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nyx-api
+  labels:
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+    app.kubernetes.io/managed-by: platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nyx-api

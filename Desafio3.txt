@@ -1,0 +1,138 @@
+﻿Padrão de Manifests da Metacortex
+Desenvolver uma página do wiki interno de Plataforma. Mantida por Segurança & Compliance.
+Última revisão: 2026-07-29. Aplica-se a todo manifesto que sobe para qualquer cluster do parque, em qualquer ambiente.
+Todo manifesto que entra num cluster do parque passa por revisão. Esta página existe para que a revisão seja sobre o que importa e não sobre o que já está decidido há dois anos. Cada regra abaixo nasceu de um incidente, de uma auditoria ou de uma discussão que ninguém quer ter de novo.
+A linguagem é a de sempre: obrigatório significa que a revisão barra sem discussão; recomendado significa que a exceção precisa estar escrita no PR; proibido significa que existe um caso registrado de estrago.
+
+Bloco 1 — Identidade e nomenclatura
+1.1 Nome de recurso em kebab-case (obrigatório)
+Nome de objeto é minúsculo, com palavras separadas por hífen, sem camelCase, sem underscore, sem ponto. A API aceita menos do que as pessoas imaginam, e nome fora do padrão quebra ferramenta de listagem e seletor escrito à mão.
+# errado
+metadata:
+  name: NyxAPI
+
+# certo
+metadata:
+  name: nyx-api
+1.2 Namespace no formato <cliente>-<ambiente> (obrigatório)
+Um cliente nunca compartilha namespace com outro, e ambiente nunca compartilha namespace com ambiente. Os ambientes válidos são dev, stg e prod. Exemplos: nyx-prod, orion-stg, helio-dev.
+Namespace fora desse formato não é criado pelo Construct e o manifesto não tem onde aterrissar.
+1.3 Rótulos obrigatórios em todo objeto (obrigatório)
+Todo objeto — Deployment, Service, ConfigMap, Secret, Job, CronJob — carrega os quatro rótulos abaixo. São eles que sustentam o inventário, o rateio de custo por cliente e a resposta à pergunta "quem é o dono disso?" às três da manhã.
+metadata:
+  labels:
+    app.kubernetes.io/name: nyx-api        # o componente
+    app.kubernetes.io/instance: nyx-prod   # a instalação
+    app.kubernetes.io/part-of: nyx         # o produto do cliente
+    app.kubernetes.io/managed-by: platform # quem aplica: platform | argocd | helm
+O rótulo curto app: sozinho não atende. Ele pode continuar existindo por compatibilidade com seletores antigos, mas não substitui os quatro.
+1.4 O seletor tem que casar com os rótulos do pod (obrigatório)
+É o erro mais comum do parque, e o mais silencioso: o objeto sobe, a revisão passa, e o serviço simplesmente não tem para onde mandar tráfego. O seletor do Service e o matchLabels do Deployment precisam ser idênticos aos rótulos do template do pod, caractere por caractere.
+# errado — um hífen de diferença e o Service fica sem endpoint
+spec:
+  selector:
+    app: nyx-api
+template:
+  metadata:
+    labels:
+      app: nyxapi
+1.5 Anotação de dono (recomendado)
+metacortex.io/owner com o time responsável, e metacortex.io/runbook com a URL do procedimento de plantão quando existir. O plantão agradece.
+1.6 Nome de container igual ao componente (recomendado)
+Container chamado app, main ou container obriga quem está lendo log a abrir o manifesto para descobrir o que é. Use o nome do componente: api, worker, scheduler.
+
+Bloco 2 — Resiliência
+2.1 requests e limits obrigatórios (obrigatório)
+Todo container declara requests e limits de CPU e memória. Container sem requests é escalonado às cegas; container sem limits de memória derruba o nó do vizinho.
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits:   {cpu: 500m, memory: 512Mi}
+Regra de bolso da casa: limits de memória entre 1,5x e 2x o consumo observado em regime. Apertar demais gera reinício por OOM; folgar demais desperdiça reserva do cliente.
+2.2 readinessProbe e livenessProbe obrigatórias (obrigatório)
+Sem probe, o Kubernetes considera o container pronto assim que o processo sobe — e manda tráfego para aplicação que ainda está carregando. As duas probes são obrigatórias em qualquer ambiente, e precisam apontar para endpoints que a aplicação de fato expõe.
+A distinção importa: readiness responde "posso receber tráfego agora?" e liveness responde "ainda estou vivo?". Apontar as duas para o mesmo endpoint que checa banco é um jeito conhecido de derrubar a aplicação inteira quando o banco fica lento — a liveness falha, o container reinicia, e o reinício não conserta banco.
+2.3 replicas >= 2 em prod (obrigatório)
+Réplica única em produção significa indisponibilidade a cada deploy, a cada drain de nó e a cada evicção. Em dev e stg, uma réplica é aceitável.
+2.4 Estratégia de atualização (obrigatório em prod)
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+maxUnavailable: 0 garante que a capacidade não cai durante o rollout. O custo é precisar de espaço para uma réplica a mais durante a troca.
+2.5 PodDisruptionBudget em prod (recomendado)
+Todo workload de prod com mais de uma réplica declara um PDB com minAvailable: 1 no mínimo. Sem PDB, uma manutenção de nó pode derrubar todas as réplicas ao mesmo tempo.
+2.6 terminationGracePeriodSeconds compatível com a aplicação (recomendado)
+O padrão de 30s não serve para worker que processa mensagem longa. Se a aplicação precisa de mais tempo para drenar, declare — e garanta que ela trata SIGTERM.
+
+Bloco 3 — Segurança
+Segurança & Compliance mantém uma varredura de configuração no pipeline, com Trivy, rodando sobre o diretório de manifests. Ela não substitui esta página: o que a varredura não conhece continua sendo conferido na revisão, e é onde a maior parte dos barramentos acontece.
+3.1 Tag :latest proibida (proibido)
+Imagem sempre em tag imutável ou digest. :latest torna impossível saber o que está rodando, quebra rollback e faz dois pods do mesmo Deployment rodarem versões diferentes.
+# errado
+image: registry.metacortex.io/nyx/api:latest
+
+# certo
+image: registry.metacortex.io/nyx/api:2.9.1
+# melhor ainda
+image: registry.metacortex.io/nyx/api@sha256:9f2c...
+3.2 securityContext obrigatório (obrigatório)
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+readOnlyRootFilesystem exige que o que precisa escrever use emptyDir montado no caminho certo. Dá trabalho uma vez e fecha uma classe inteira de escalonamento de privilégio.
+3.3 Segredo em texto puro proibido (proibido)
+Nenhum valor sensível entra no manifesto — nem em env.value, nem em ConfigMap, nem em comentário. Sempre por referência a um Secret.
+# errado
+env:
+  - name: DATABASE_URL
+    value: "postgres://nyx:s3nh4-do-banco@pg.nyx-prod.svc:5432/nyx"
+
+# certo
+env:
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef: {name: nyx-db, key: url}
+Lembre que Secret do Kubernetes é base64, não criptografia. O padrão vale para não versionar o segredo no Git; a proteção em repouso é assunto do cluster.
+3.4 automountServiceAccountToken: false quando não fala com a API (obrigatório)
+A maioria das aplicações não precisa conversar com o apiserver, e montar o token por padrão entrega uma credencial de graça para quem comprometer o container.
+3.5 ServiceAccount dedicada (recomendado)
+Não use a default do namespace. Uma ServiceAccount por workload, com o RBAC mínimo — e nenhum RBAC quando ela não fala com a API.
+3.6 hostNetwork, hostPID e privileged proibidos (proibido)
+Sem exceção em workload de cliente. Se for infraestrutura da própria Metacortex e precisar, o pedido vai para Segurança com justificativa escrita.
+3.7 Imagem só de registry interno (obrigatório)
+Todo image: aponta para registry.metacortex.io. Imagem de registry público entra pelo Loom, que a espelha, escaneia e republica internamente.
+
+Bloco 4 — Vocabulário e conceitos
+Esta seção existe para quem está chegando na plataforma e ainda não tem familiaridade com os objetos do Kubernetes. Quem já opera os clusters pode pular direto para os blocos anteriores.
+4.1 Pod
+A menor unidade que o Kubernetes agenda. Um Pod é um ou mais containers que compartilham rede e, opcionalmente, volumes. Containers do mesmo Pod enxergam uns aos outros em localhost e sempre vivem no mesmo nó. Na prática quase ninguém cria um Pod diretamente: Pod não é reagendado sozinho se o nó morre, não tem rollout e não tem histórico. Ele é o resultado de um controlador de nível mais alto.
+O ciclo de vida de um Pod passa por fases: Pending enquanto ele espera ser agendado ou baixar imagem, Running quando pelo menos um container subiu, e depois Succeeded ou Failed para cargas que terminam. Um detalhe que confunde muita gente: um Pod cujo container está em CrashLoopBackOff continua com a fase Running — o estado de falha vive no container, não no Pod.
+4.2 ReplicaSet
+O controlador que garante que exista um número desejado de Pods iguais. Ele observa quantos Pods com determinado rótulo existem e cria ou remove Pods até chegar no número declarado. Você raramente escreve um ReplicaSet à mão; ele é criado pelo Deployment.
+4.3 Deployment
+O objeto que você de fato escreve. Um Deployment descreve o estado desejado de uma aplicação sem estado — qual imagem, quantas réplicas, quais recursos — e gerencia ReplicaSets para chegar lá. É ele que dá rollout e rollback: ao mudar o template do Pod, o Deployment cria um ReplicaSet novo e vai movendo réplicas do antigo para o novo conforme a estratégia declarada. O histórico de ReplicaSets é o que permite voltar atrás.
+A hierarquia, então, é: Deployment governa ReplicaSets, que governam Pods, que contêm containers.
+4.4 Service
+Um Service dá um endereço estável para um conjunto de Pods que muda o tempo todo. Pods nascem e morrem com IPs diferentes; o Service resolve isso publicando um nome DNS interno e distribuindo tráfego para os Pods que casam com o seu seletor.
+Os tipos que aparecem nos nossos clusters são ClusterIP, acessível só dentro do cluster e o padrão para comunicação entre serviços, e NodePort, usado na borda. LoadBalancer não é usado diretamente por workload de cliente.
+4.5 A diferença entre port e targetPort
+Fonte recorrente de confusão. port é a porta em que o Service escuta — é ela que outro serviço usa ao chamar http://nyx-api:80. targetPort é a porta em que o container realmente escuta, para onde o tráfego é encaminhado. As duas podem ser diferentes, e normalmente são: o Service publica 80 e o container escuta 8080.
+4.6 Endpoints
+Objeto criado automaticamente para cada Service, listando os endereços dos Pods que casam com o seletor. É o lugar onde se descobre que um Service não está entregando tráfego: se o objeto de Endpoints não traz endereço nenhum, nenhum Pod casou com o seletor. Note que o campo dos endereços não vem vazio quando não há nenhum — ele simplesmente não aparece na resposta da API.
+4.7 ConfigMap e Secret
+Ambos guardam configuração fora da imagem, o que permite a mesma imagem rodar em dev, stg e prod. O ConfigMap guarda o que não é sensível; o Secret guarda o que é. Tecnicamente o Secret só difere por ser codificado em base64 e ter tratamento diferenciado no armazenamento do cluster — não é criptografia por si só.
+4.8 Probes
+livenessProbe responde "este container ainda está vivo?" — se falha, o kubelet reinicia o container. readinessProbe responde "este container pode receber tráfego?" — se falha, o Pod sai da lista de endpoints do Service, mas não é reiniciado. Existe ainda a startupProbe, que dá um período de carência para aplicação de inicialização lenta antes de a liveness começar a contar.
+
+Exceções
+Exceção a regra obrigatória precisa de aprovação escrita de Segurança & Compliance no PR, com prazo de validade. Exceção a regra recomendada precisa só da justificativa no PR. Não existe exceção a regra proibida para workload de cliente.
+Histórico
+    • 2026-07-29 — automountServiceAccountToken: false passa de recomendado a obrigatório
+    • 2026-05-14 — Adicionado o bloco de vocabulário a pedido do onboarding
+    • 2026-03-02 — replicas >= 2 em prod passa a ser obrigatório após o incidente de março na borda
+    • 2025-11-20 — Proibida a tag :latest

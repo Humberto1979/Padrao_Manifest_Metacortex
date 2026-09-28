@@ -1,0 +1,12 @@
+# Patch prod: replicas >= 2 (regra 2.3) + estratégia de atualização (regra 2.4).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nyx-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nyx-prod
+  labels:
+    app.kubernetes.io/name: nyx-prod
+    app.kubernetes.io/part-of: nyx
+    app.kubernetes.io/managed-by: platform

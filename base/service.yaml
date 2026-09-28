@@ -1,0 +1,24 @@
+# Service: endereço estável para os Pods (regra 4.4).
+# port != targetPort (regra 4.5): Service publica 80, container escuta 8080.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nyx-api
+  labels:
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+    app.kubernetes.io/managed-by: platform
+  annotations:
+    metacortex.io/owner: "time-nyx"
+spec:
+  type: ClusterIP                       # padrão para comunicação interna (regra 4.4)
+  selector:
+    # Casar caractere por caractere com os rótulos do pod (regra 1.4 — obrigatório)
+    app.kubernetes.io/name: nyx-api
+    # ERRADO (regra 1.4): selector casando em "app: nyxapi" quando o pod usa "app: nyx-api"
+    #   — Service fica sem endpoint (objeto Endpoints vazio, regra 4.6)
+  ports:
+    - name: http
+      port: 80                          # porta em que o Service escuta
+      targetPort: 8080                  # porta em que o container escuta
+      protocol: TCP

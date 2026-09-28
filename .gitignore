@@ -1,0 +1,25 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Enunciado ODT — versionamos apenas o .txt
+*.odt
+.~lock.*
+
+# Artefatos gerados pela implementacao local (saidas kubectl JSON)
+tools/state/
+
+# Logs
+*.log

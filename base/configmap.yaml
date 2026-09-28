@@ -1,0 +1,15 @@
+# ConfigMap guarda o que NÃO é sensível (regra 4.7).
+# Segredo em texto puro é proibido (regra 3.3) — valores sensíveis vão no Secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nyx-api-config
+  labels:
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+    app.kubernetes.io/managed-by: platform
+data:
+  LOG_LEVEL: "info"
+  DB_HOST: "pg.nyx-prod.svc"
+  # ERRADO — segredo em texto puro (regra 3.3 — proibido):
+  # DATABASE_URL: "postgres://nyx:s3nh4-do-banco@pg.nyx-prod.svc:5432/nyx"

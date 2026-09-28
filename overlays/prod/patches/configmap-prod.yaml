@@ -1,0 +1,8 @@
+# Patch prod: DB_HOST explícito para o postgres de prod.
+# (redundante vs base, mas deixa o overlay autodocumentado e independente do base)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nyx-api-config
+data:
+  DB_HOST: pg.nyx-prod.svc

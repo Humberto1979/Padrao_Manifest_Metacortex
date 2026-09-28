@@ -1,0 +1,8 @@
+# Patch dev: DB_HOST aponta para o postgres do ambiente dev.
+# (strategic merge: mescla em data, preservando LOG_LEVEL do base)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nyx-api-config
+data:
+  DB_HOST: pg.nyx-dev.svc

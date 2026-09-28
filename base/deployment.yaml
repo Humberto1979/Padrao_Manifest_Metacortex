@@ -1,0 +1,106 @@
+# Deployment base (sem namespace/instance — injetados pelo overlay via kustomize).
+# Hierarquia: Deployment -> ReplicaSet -> Pod -> container (regra 4.3).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nyx-api                       # kebab-case (regra 1.1 — obrigatório)
+  labels:
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+    app.kubernetes.io/managed-by: platform
+  annotations:
+    metacortex.io/owner: "time-nyx"
+    metacortex.io/runbook: "https://wiki.metacortex.io/runbooks/nyx-api"
+spec:
+  replicas: 1                         # default; prod patcheia para 2 (regra 2.3)
+  selector:
+    matchLabels:
+      # Casar caractere por caractere com o template do pod (regra 1.4 — obrigatório)
+      app.kubernetes.io/name: nyx-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nyx-api
+        app.kubernetes.io/part-of: nyx
+        app.kubernetes.io/managed-by: platform
+    spec:
+      automountServiceAccountToken: false   # regra 3.4 — obrigatório
+      serviceAccountName: nyx-api           # SA dedicada (regra 3.5 — recomendado)
+      terminationGracePeriodSeconds: 60     # regra 2.6 — recomendado
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: api                         # nome do componente, não "app"/"main" (regra 1.6 — recomendado)
+          image: registry.metacortex.io/nyx/api:2.9.1   # tag imutável, NÃO :latest (regra 3.1/3.7)
+          # ERRADO (regra 3.1 — proibido): image: registry.metacortex.io/nyx/api:latest
+          # ERRADO (regra 3.7 — obrigatório): image: docker.io/nyx/api:2.9.1   (registry externo)
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: nyx-api-config
+                  key: LOG_LEVEL
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: nyx-api-config
+                  key: DB_HOST
+            # Segredo sempre por referência (regra 3.3 — proibido texto puro)
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nyx-db
+                  key: url
+                  optional: false
+          # ERRADO (regra 3.3 — proibido):
+          #   - name: DATABASE_URL
+          #     value: "postgres://nyx:s3nh4-do-banco@pg.nyx-prod.svc:5432/nyx"
+          resources:                       # regra 2.1 — obrigatório
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi                # 1.5x–2x o regime observado (regra de bolso)
+          # Probes em endpoints distintos (regra 2.2 — obrigatório).
+          # liveness NÃO checa banco: se o banco fica lento, reiniciar container não conserta.
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          securityContext:                 # regra 3.2 — obrigatório
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true   # exige emptyDir onde precisa escrever
+            capabilities:
+              drop: ["ALL"]
+            # ERRADO (regra 3.6 — proibido): privileged: true
+            # ERRADO (regra 3.6 — proibido): hostNetwork: true   /  hostPID: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp              # readOnlyRootFilesystem exige volume gravável
+            - name: cache
+              mountPath: /var/cache/nyx
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
