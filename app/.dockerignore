@@ -1,0 +1,6 @@
+# Mantém o contexto de build enxuto: só server.py entra na imagem.
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/

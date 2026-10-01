@@ -18,8 +18,11 @@ venv/
 *.odt
 .~lock.*
 
-# Artefatos gerados pela implementacao local (saidas kubectl JSON)
+# Artefatos gerados pela implementação local (saidas kubectl JSON)
 tools/state/
+
+# Documento interno de transferência de contexto entre sessões (rascunho de trabalho)
+Contexto_1.md
 
 # Logs
 *.log

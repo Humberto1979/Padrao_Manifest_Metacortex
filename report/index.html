@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Desafio 3 — Relatório de Conformidade Metacortex</title>
+<style>
+:root {
+  --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --accent:#2f81f7;
+  --ok:#3fb950; --bad:#f85149; --card:#161b22; --border:#30363d; --code:#0d1117;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg); color:var(--fg); line-height:1.5; }
+header { padding:24px 32px; border-bottom:1px solid var(--border); }
+header h1 { margin:0 0 4px; font-size:20px; }
+header p { margin:0; color:var(--muted); font-size:13px; }
+nav { display:flex; gap:4px; padding:0 32px; border-bottom:1px solid var(--border); background:var(--card); }
+nav button { background:transparent; border:none; color:var(--muted); padding:12px 16px;
+             cursor:pointer; font-size:14px; border-bottom:2px solid transparent; }
+nav button.active { color:var(--fg); border-bottom-color:var(--accent); }
+nav button:hover { color:var(--fg); }
+main { padding:24px 32px; }
+.tab { display:none; }
+.tab.active { display:block; }
+h2 { font-size:17px; margin-top:0; }
+h3 { font-size:14px; color:var(--muted); margin:24px 0 8px; text-transform:uppercase; letter-spacing:.05em; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:13px; }
+th,td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); }
+th { color:var(--muted); font-weight:600; }
+td.ok { color:var(--ok); } td.bad { color:var(--bad); }
+code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre { background:var(--code); border:1px solid var(--border); border-radius:6px;
+      padding:12px; overflow:auto; font-size:12px; line-height:1.45; max-height:520px; }
+.pill { display:inline-block; padding:2px 8px; border-radius:12px; font-size:12px;
+        background:var(--border); color:var(--fg); margin-left:6px; }
+.mono { font-family:ui-monospace,monospace; color:var(--accent); }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+@media(max-width:900px){ .grid3{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Desafio 3 — Padrão de Manifests Metacortex <span class="pill">nyx-api</span></h1>
+  <p>Relatório gerado em 2026-10-01 17:04:48 UTC a partir do cluster <span class="mono">kind-metacortex</span> — estado vivo + YAML renderizado por Kustomize.</p>
+</header>
+<nav>
+  <button class="active" data-tab="ambientes">Ambientes</button>
+  <button data-tab="endpoints">Service + Endpoints</button>
+  <button data-tab="conformidade">Conformidade</button>
+  <button data-tab="yaml">YAML Renderizado</button>
+</nav>
+<main>
+<div class='tab active' id='tab-ambientes'><h2>Ambientes</h2>
+<div class='grid3'>
+<div class='card'>
+<h3 style='margin-top:0'>nyx-dev <span class='pill'>dev</span></h3>
+<table><tr><th>Pod</th><th>Ready</th><th>Fase</th><th>IP</th><th>UID</th></tr>
+<tr><td class='mono'>nyx-api-c6789bb48-mbcd8</td><td>1/1</td><td>Running</td><td>10.244.0.5</td><td>10001</td></tr>
+</table>
+<p><b>Deployment:</b> replicas=1 (ready=1/desired=1)<br><span class='mono'>registry.metacortex.io/nyx/api:2.9.1</span></p>
+<p><b>ConfigMap:</b> DB_HOST=<span class='mono'>pg.nyx-dev.svc</span>, LOG_LEVEL=<span class='mono'>info</span></p>
+<p><b>SA:</b> nyx-api (automount=False)</p>
+<p><b>PDB:</b> — (não se aplica a dev/stg)</p>
+</div>
+<div class='card'>
+<h3 style='margin-top:0'>nyx-stg <span class='pill'>stg</span></h3>
+<table><tr><th>Pod</th><th>Ready</th><th>Fase</th><th>IP</th><th>UID</th></tr>
+<tr><td class='mono'>nyx-api-758d8d8559-sf4zb</td><td>1/1</td><td>Running</td><td>10.244.0.6</td><td>10001</td></tr>
+</table>
+<p><b>Deployment:</b> replicas=1 (ready=1/desired=1)<br><span class='mono'>registry.metacortex.io/nyx/api:2.9.1</span></p>
+<p><b>ConfigMap:</b> DB_HOST=<span class='mono'>pg.nyx-stg.svc</span>, LOG_LEVEL=<span class='mono'>info</span></p>
+<p><b>SA:</b> nyx-api (automount=False)</p>
+<p><b>PDB:</b> — (não se aplica a dev/stg)</p>
+</div>
+<div class='card'>
+<h3 style='margin-top:0'>nyx-prod <span class='pill'>prod</span></h3>
+<table><tr><th>Pod</th><th>Ready</th><th>Fase</th><th>IP</th><th>UID</th></tr>
+<tr><td class='mono'>nyx-api-6f6c88f85d-6hxwr</td><td>1/1</td><td>Running</td><td>10.244.0.8</td><td>10001</td></tr>
+<tr><td class='mono'>nyx-api-6f6c88f85d-7gt6n</td><td>1/1</td><td>Running</td><td>10.244.0.7</td><td>10001</td></tr>
+</table>
+<p><b>Deployment:</b> replicas=2 (ready=2/desired=2)<br><span class='mono'>registry.metacortex.io/nyx/api:2.9.1</span></p>
+<p><b>ConfigMap:</b> DB_HOST=<span class='mono'>pg.nyx-prod.svc</span>, LOG_LEVEL=<span class='mono'>info</span></p>
+<p><b>SA:</b> nyx-api (automount=False)</p>
+<p><b>PDB:</b> minAvailable=1, allowedDisruptions=1</p>
+</div>
+</div></div>
+<div class='tab' id='tab-endpoints'><h2>Service + Endpoints</h2>
+<p>Regra 1.4/4.6: o selector do Service deve casar com os rótulos do pod. Sintoma de descasamento = <b>Endpoints vazio</b> (tráfego nunca chega ao pod).</p>
+<table><tr><th>Ambiente</th><th>ClusterIP</th><th>port→targetPort</th><th>Selector</th><th>Endpoints</th></tr>
+<tr><td><b>nyx-dev</b></td><td class='mono'>10.96.103.19</td><td>80→8080</td><td class='mono' style='font-size:11px'>app.kubernetes.io/instance=nyx-dev, app.kubernetes.io/name=nyx-api</td><td class='ok mono'>10.244.0.5:8080</td></tr>
+<tr><td><b>nyx-stg</b></td><td class='mono'>10.96.208.57</td><td>80→8080</td><td class='mono' style='font-size:11px'>app.kubernetes.io/instance=nyx-stg, app.kubernetes.io/name=nyx-api</td><td class='ok mono'>10.244.0.6:8080</td></tr>
+<tr><td><b>nyx-prod</b></td><td class='mono'>10.96.239.114</td><td>80→8080</td><td class='mono' style='font-size:11px'>app.kubernetes.io/instance=nyx-prod, app.kubernetes.io/name=nyx-api</td><td class='ok mono'>10.244.0.7:8080</td></tr>
+</table></div>
+<div class='tab' id='tab-conformidade'><h2>Conformidade (estado vivo)</h2>
+<p>Cada regra do padrão Metacortex verificada contra o estado real do cluster.</p>
+<table><tr><th>Bloco</th><th>Regra</th><th>Descrição</th><th>Esperado</th><th>Runtime</th><th>Status</th></tr>
+<tr><td colspan='6'><h3 style='margin:8px 0'>Bloco 1</h3></td></tr>
+<tr><td></td><td class='mono'>1.1</td><td>Nome em kebab-case</td><td class='mono'>nyx-api</td><td class='mono'>nyx-api</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>1.2</td><td>Namespace &lt;cliente&gt;-&lt;ambiente&gt;</td><td class='mono'>nyx-{dev,stg,prod}</td><td class='mono'>nyx-dev, nyx-stg, nyx-prod</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>1.3</td><td>Rótulo instance por overlay</td><td class='mono'>um por env</td><td class='mono'>presente em todos</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>1.4</td><td>Selector casa com pods (Endpoints não-vazios)</td><td class='mono'>&gt;=1 endpoint</td><td class='mono'>dev=1; stg=1; prod=1</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>1.6</td><td>Container nomeado &#x27;api&#x27;</td><td class='mono'>api</td><td class='mono'>api</td><td class='ok'>✅</td></tr>
+<tr><td colspan='6'><h3 style='margin:8px 0'>Bloco 2</h3></td></tr>
+<tr><td></td><td class='mono'>2.1</td><td>requests/limits definidos</td><td class='mono'>presentes</td><td class='mono'>presentes (cpu/mem)</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>2.2</td><td>Probes readiness+liveness distintas</td><td class='mono'>/healthz/ready e /healthz/live</td><td class='mono'>presentes</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>2.3</td><td>replicas&gt;=2 em prod</td><td class='mono'>&gt;=2</td><td class='mono'>2</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>2.4</td><td>RollingUpdate maxUnavailable=0/maxSurge=1</td><td class='mono'>0 / 1</td><td class='mono'>0 / 1</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>2.5</td><td>PDB minAvailable=1 (prod)</td><td class='mono'>1</td><td class='mono'>1</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>2.6</td><td>terminationGracePeriodSeconds=60</td><td class='mono'>60</td><td class='mono'>60</td><td class='ok'>✅</td></tr>
+<tr><td colspan='6'><h3 style='margin:8px 0'>Bloco 3</h3></td></tr>
+<tr><td></td><td class='mono'>3.1</td><td>Sem :latest (tag imutável)</td><td class='mono'>tag 2.9.1</td><td class='mono'>registry.metacortex.io/nyx/api:2.9.1</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.2</td><td>runAsNonRoot + UID 10001</td><td class='mono'>true / 10001</td><td class='mono'>True / 10001</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.2</td><td>allowPrivilegeEscalation=false</td><td class='mono'>false</td><td class='mono'>False</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.2</td><td>readOnlyRootFilesystem=true</td><td class='mono'>true</td><td class='mono'>True</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.2</td><td>capabilities drop=[ALL]</td><td class='mono'>[&quot;ALL&quot;]</td><td class='mono'>[&#x27;ALL&#x27;]</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.2</td><td>fsGroup=10001 (emptyDir gravável)</td><td class='mono'>10001</td><td class='mono'>10001</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.3</td><td>Segredo por secretKeyRef (base64)</td><td class='mono'>placeholder CHANGE-ME</td><td class='mono'>DATABASE_URL via Secret nyx-db</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.4</td><td>automountServiceAccountToken=false</td><td class='mono'>false</td><td class='mono'>False</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.5</td><td>ServiceAccount dedicada</td><td class='mono'>nyx-api (não default)</td><td class='mono'>nyx-api</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.6</td><td>Sem hostNetwork/hostPID/privileged</td><td class='mono'>ausentes (false)</td><td class='mono'>hostNet=False hostPID=False priv=False</td><td class='ok'>✅</td></tr>
+<tr><td></td><td class='mono'>3.7</td><td>Imagem de registry interno</td><td class='mono'>registry.metacortex.io</td><td class='mono'>registry.metacortex.io/nyx/api</td><td class='ok'>✅</td></tr>
+</table></div>
+<div class='tab' id='tab-yaml'><h2>YAML Renderizado (kubectl kustomize)</h2>
+<p>Manifest final efetivamente aplicado em cada ambiente — saída de <span class='mono'>kubectl kustomize overlays/&lt;env&gt;</span>.</p>
+<h3>nyx-dev</h3>
+<pre>apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-dev
+    app.kubernetes.io/part-of: nyx
+  name: nyx-dev
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+    metacortex.io/runbook: https://wiki.metacortex.io/runbooks/nyx-api
+  labels:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-dev
+---
+apiVersion: v1
+data:
+  DB_HOST: pg.nyx-dev.svc
+  LOG_LEVEL: info
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api-config
+  namespace: nyx-dev
+---
+apiVersion: v1
+data:
+  url: cG9zdGdyZXM6Ly9ueXg6Q0hBTkdFLU1FQHBnLm55eC1wcm9kLnN2Yzo1NDMyL255eA==
+kind: Secret
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-db
+  namespace: nyx-dev
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+  labels:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-dev
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/name: nyx-api
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+    metacortex.io/runbook: https://wiki.metacortex.io/runbooks/nyx-api
+  labels:
+    app.kubernetes.io/instance: nyx-dev
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nyx-dev
+      app.kubernetes.io/name: nyx-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: nyx-dev
+        app.kubernetes.io/managed-by: platform
+        app.kubernetes.io/name: nyx-api
+        app.kubernetes.io/part-of: nyx
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: LOG_LEVEL
+              name: nyx-api-config
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: nyx-api-config
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: url
+              name: nyx-db
+              optional: false
+        image: registry.metacortex.io/nyx/api:2.9.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz/live
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        name: api
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /var/cache/nyx
+          name: cache
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      serviceAccountName: nyx-api
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: cache
+</pre>
+<h3>nyx-stg</h3>
+<pre>apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-stg
+    app.kubernetes.io/part-of: nyx
+  name: nyx-stg
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+    metacortex.io/runbook: https://wiki.metacortex.io/runbooks/nyx-api
+  labels:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-stg
+---
+apiVersion: v1
+data:
+  DB_HOST: pg.nyx-stg.svc
+  LOG_LEVEL: info
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api-config
+  namespace: nyx-stg
+---
+apiVersion: v1
+data:
+  url: cG9zdGdyZXM6Ly9ueXg6Q0hBTkdFLU1FQHBnLm55eC1wcm9kLnN2Yzo1NDMyL255eA==
+kind: Secret
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-db
+  namespace: nyx-stg
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+  labels:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-stg
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/name: nyx-api
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+    metacortex.io/runbook: https://wiki.metacortex.io/runbooks/nyx-api
+  labels:
+    app.kubernetes.io/instance: nyx-stg
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-stg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nyx-stg
+      app.kubernetes.io/name: nyx-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: nyx-stg
+        app.kubernetes.io/managed-by: platform
+        app.kubernetes.io/name: nyx-api
+        app.kubernetes.io/part-of: nyx
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: LOG_LEVEL
+              name: nyx-api-config
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: nyx-api-config
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: url
+              name: nyx-db
+              optional: false
+        image: registry.metacortex.io/nyx/api:2.9.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz/live
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        name: api
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /var/cache/nyx
+          name: cache
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      serviceAccountName: nyx-api
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: cache
+</pre>
+<h3>nyx-prod</h3>
+<pre>apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-prod
+    app.kubernetes.io/part-of: nyx
+  name: nyx-prod
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+    metacortex.io/runbook: https://wiki.metacortex.io/runbooks/nyx-api
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-prod
+---
+apiVersion: v1
+data:
+  DB_HOST: pg.nyx-prod.svc
+  LOG_LEVEL: info
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api-config
+  namespace: nyx-prod
+---
+apiVersion: v1
+data:
+  url: cG9zdGdyZXM6Ly9ueXg6Q0hBTkdFLU1FQHBnLm55eC1wcm9kLnN2Yzo1NDMyL255eA==
+kind: Secret
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-db
+  namespace: nyx-prod
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-prod
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/name: nyx-api
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    metacortex.io/owner: time-nyx
+    metacortex.io/runbook: https://wiki.metacortex.io/runbooks/nyx-api
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nyx-prod
+      app.kubernetes.io/name: nyx-api
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: nyx-prod
+        app.kubernetes.io/managed-by: platform
+        app.kubernetes.io/name: nyx-api
+        app.kubernetes.io/part-of: nyx
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: LOG_LEVEL
+              name: nyx-api-config
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: nyx-api-config
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: url
+              name: nyx-db
+              optional: false
+        image: registry.metacortex.io/nyx/api:2.9.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz/live
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        name: api
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /var/cache/nyx
+          name: cache
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      serviceAccountName: nyx-api
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: cache
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    app.kubernetes.io/instance: nyx-prod
+    app.kubernetes.io/managed-by: platform
+    app.kubernetes.io/name: nyx-api
+    app.kubernetes.io/part-of: nyx
+  name: nyx-api
+  namespace: nyx-prod
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nyx-prod
+      app.kubernetes.io/name: nyx-api
+</pre>
+</div>
+</main>
+<script>
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+  };
+});
+</script>
+</body>
+</html>
