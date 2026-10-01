@@ -61,7 +61,13 @@ spec:
                   optional: false
           # ERRADO (regra 3.3 — proibido):
           #   - name: DATABASE_URL
-          #     value: "postgres://nyx:s3nh4-do-banco@pg.nyx-prod.svc:5432/nyx"
+          #     value: "postgres://nyx:<SENHA-EM-TEXTO-PURO>@pg.nyx-prod.svc:5432/nyx"
+          #
+          # NOTA DIDATICA: a regra 3.3 proibe valor sensivel "nem em env.value, nem em
+          # ConfigMap, nem em comentario". Por isso o exemplo negativo acima usa o
+          # placeholder <SENHA-EM-TEXTO-PURO> em vez de uma string com aparencia de
+          # credencial — mesmo sendo um exemplo didatico do que NAO fazer, evitamos
+          # versionar qualquer texto que se parea com um segredo real.
           resources:                       # regra 2.1 — obrigatório
             requests:
               cpu: 100m

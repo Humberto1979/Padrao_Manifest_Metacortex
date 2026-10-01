@@ -12,4 +12,10 @@ data:
   LOG_LEVEL: "info"
   DB_HOST: "pg.nyx-prod.svc"
   # ERRADO — segredo em texto puro (regra 3.3 — proibido):
-  # DATABASE_URL: "postgres://nyx:s3nh4-do-banco@pg.nyx-prod.svc:5432/nyx"
+  # DATABASE_URL: "postgres://nyx:<SENHA-EM-TEXTO-PURO>@pg.nyx-prod.svc:5432/nyx"
+  #
+  # NOTA DIDATICA: a regra 3.3 proibe valor sensivel "nem em env.value, nem em
+  # ConfigMap, nem em comentario". Por isso o exemplo negativo acima usa o
+  # placeholder <SENHA-EM-TEXTO-PURO> em vez de uma string com aparencia de
+  # credencial — mesmo sendo um exemplo didatico do que NAO fazer, evitamos
+  # versionar qualquer texto que se parea com um segredo real.
